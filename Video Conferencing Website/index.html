@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video Conferencing</title>
+    <style>
+        #localVideo, #remoteVideo {
+            width: 320px;
+            height: 240px;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Video Conferencing</h1>
+
+    <video id="localVideo" autoplay muted></video>
+    <video id="remoteVideo" autoplay></video>
+
+    <button id="startButton">Start Call</button>
+    <button id="stopButton">Stop Call</button>
+
+    <script>
+        const localVideo = document.getElementById('localVideo');
+        const remoteVideo = document.getElementById('remoteVideo');
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        let localStream, remoteStream;
+        let peerConnection;
+
+        async function startCall() {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            localVideo.srcObject = localStream;
+
+            // Create a peer connection
+            peerConnection = new RTCPeerConnection();
+
+            // Add the local stream to the peer connection
+            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+            // Set up event handlers for the peer connection
+            peerConnection.ontrack = handleRemoteStream;
+            peerConnection.onicecandidate = handleICECandidate;
+
+            // Create an offer
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+
+            // Send the offer to the other peer (typically using a signaling server)
+            // For simplicity, we'll skip the signaling server here.
+
+            // For the receiver's side, you'd handle the offer, create an answer, and set it as the remote description.
+        }
+
+        function handleRemoteStream(event) {
+            remoteStream = event.streams[0];
+            remoteVideo.srcObject = remoteStream;
+        }
+
+        function handleICECandidate(event) {
+            // Send the ICE candidate to the other peer (typically using a signaling server)
+            // For simplicity, we'll skip the signaling server here.
+        }
+
+        startButton.addEventListener('click', startCall);
+
+        stopButton.addEventListener('click', () => {
+            localStream.getTracks().forEach(track => track.stop());
+            peerConnection.close();
+            localVideo.srcObject = null;
+            remoteVideo.srcObject = null;
+        });
+    </script>
+</body>
+</html>
